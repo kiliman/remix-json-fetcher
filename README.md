@@ -2,6 +2,8 @@
 
 This example includes a patch to add native JSON support to `useFetcher().submit()`
 
+[Link to example](https://remix-json-fetcher.herokuapp.com/)
+
 ```ts
 export const action: ActionFunction = async ({ request }) => {
   const data = await request.json()
