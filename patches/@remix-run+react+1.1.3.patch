@@ -1,0 +1,88 @@
+diff --git a/node_modules/@remix-run/react/components.d.ts b/node_modules/@remix-run/react/components.d.ts
+index e2dee33..519b3ec 100644
+--- a/node_modules/@remix-run/react/components.d.ts
++++ b/node_modules/@remix-run/react/components.d.ts
+@@ -130,6 +130,7 @@ export interface SubmitOptions {
+      * to `false`.
+      */
+     replace?: boolean;
++    json?: string | object;
+ }
+ /**
+  * Submits a HTML `<form>` to the server without reloading the page.
+diff --git a/node_modules/@remix-run/react/esm/components.js b/node_modules/@remix-run/react/esm/components.js
+index eccf492..f2a46dc 100644
+--- a/node_modules/@remix-run/react/esm/components.js
++++ b/node_modules/@remix-run/react/esm/components.js
+@@ -699,7 +699,17 @@ function useSubmitImpl(key) {
+     let action;
+     let encType;
+     let formData;
+-
++    let json;
++    if (options.json) {
++      try {
++        json = (typeof options.json === "string") ? options.json : JSON.stringify(options.json);
++        method = options.method
++        action = options.action || defaultAction;
++      } catch (e) {
++        console.error(e);
++        throw e;
++      }
++    } else {
+     if (isFormElement(target)) {
+       let submissionTrigger = options.submissionTrigger;
+       method = options.method || target.method;
+@@ -751,6 +761,7 @@ function useSubmitImpl(key) {
+         }
+       }
+     }
++  }
+
+     let {
+       protocol,
+@@ -770,6 +781,7 @@ function useSubmitImpl(key) {
+
+     let submission = {
+       formData,
++      json,
+       action: url.pathname + url.search,
+       method: method.toUpperCase(),
+       encType,
+diff --git a/node_modules/@remix-run/react/esm/data.js b/node_modules/@remix-run/react/esm/data.js
+index 800d588..d2fca0b 100644
+--- a/node_modules/@remix-run/react/esm/data.js
++++ b/node_modules/@remix-run/react/esm/data.js
+@@ -52,12 +52,16 @@ function getActionInit(submission, signal) {
+   let {
+     encType,
+     method,
+-    formData
++    formData,
++    json
+   } = submission;
+   let headers = undefined;
+-  let body = formData;
+-
+-  if (encType === "application/x-www-form-urlencoded") {
++  let body = json ? json : formData;
++  if (json) {
++    headers = {
++      "Content-Type": "application/json"
++    };
++  } else if (encType === "application/x-www-form-urlencoded") {
+     body = new URLSearchParams();
+
+     for (let [key, value] of formData) {
+diff --git a/node_modules/@remix-run/react/transition.d.ts b/node_modules/@remix-run/react/transition.d.ts
+index d670194..e44ccfa 100644
+--- a/node_modules/@remix-run/react/transition.d.ts
++++ b/node_modules/@remix-run/react/transition.d.ts
+@@ -82,6 +82,7 @@ export interface Submission {
+     action: string;
+     method: string;
+     formData: FormData;
++    json?: string | object;
+     encType: string;
+     key: string;
+ }
